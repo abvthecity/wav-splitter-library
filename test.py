@@ -1,5 +1,7 @@
-import os, sys, binascii, splitter
+import wave
+from src.splitterkit import split_ascii
 
-src = 'samples/f_disgust.wav'
-data = splitter.split_ascii(src, 1)
+src = 'res/samples/f_disgust.wav'
+wavData = wave.open(src, mode='rb')
+data = split_ascii(wavData, 1)
 print data[1]
