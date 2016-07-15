@@ -1,17 +1,20 @@
-from splitterkit import readwave, writewave, split, combine
+from splitterkit import readwave, writewave, splitInterval, merge, combine_list
 
-src = 'res/samples/f_disgust.wav'
-dest = 'res/output/somefile.wav'
+src = 'res/input/money.wav'
+dest = 'res/file-'
 
+# extract data from wav file
 data = readwave(src)
-print len(data[1][0])
-splitted = split(data, 1)
-print splitted[0][3]
 
-for i in range(len(splitted[1])):
-    destination = 'res/output/file-'+`i`+'.wav'
-    writewave(destination, (splitted[0],[splitted[1][i]]))
+# split file into equal 1-second intervals
+splitted = splitInterval(data)
 
-combined = combine([splitted] + [data])
-print len(combined[1][0])
-writewave(dest, combined)
+# save each 1-second interval to output as individual files
+ex1 = writewave(dest + 'ex1-', splitted)
+print ex1 # ['res/file-ex1-0.wav', 'res/file-ex1-1.wav', ...]
+
+# here's a weird application of merging audio
+# which will output original sound looped twice.
+merged = merge(combine_list([splitted, data]))
+ex2 = writewave(dest + 'ex2-', merged)
+print ex2 # ['res/file-ex2-0.wav']

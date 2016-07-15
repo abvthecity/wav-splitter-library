@@ -1,46 +1,74 @@
-# Wav Splitter API
+# Wav Splitter API (aka SplitterKit)
 
-is a python library for splitting wav files into equal intervals, as well as combine wav files.
+SplitterKit is a simple python library for splitting and merging **wave** files. (Yes: .wav files only).
 
-# How to use
+### What is this for?
+
+This micro-service library is written for an internal project at BCG Digital Ventures. It serves a specific purpose: splice an audio file into a dozen files. But I've written this library in a way that can be re-used for any wav-splitting purposes. :)
+
+## How to use
+
+### Methods
+* `readwave(src)`
+  * src: `'path/of/file.wav'`
+  * returns: `(meta, [data])`
+  * *note: `data` is in a string of bits. `meta` is the `namedtuple` produced by `wave.open(src).getparams()`.*
+* `writewave(dest, data)`
+  * dest: `'path/of/dir/prefix-'`
+  * data: `(meta, [mult, data, pts, ...])`
+  * returns: `['path/of/dir/prefix-0.wav', ...]`
+* `split(data, start, end)`
+  * data: `(meta, [data])`
+  * start: frame#
+  * end: frame#
+  * returns: `(meta, [sliced_data])`
+* `split_s(data, start_seconds, end_seconds)`
+  * same as `split()` but using seconds
+* `splitInterval(data, interval, [overlap])`
+  * data: `(meta, [data])`
+  * interval: # of frames you want to iterate over (>0)
+  * overlap: # of frames to cover per iteration (=interval, >0)
+  * returns: `(meta, [mult, data, pts, ...])`
+* `splitInterval_s(data, interval_seconds, [overlap_seconds])`
+  * same as `splitInterval()` but using seconds
+* `split_list(data)`:
+  * data: `[(meta, [data, data2, data3, ...])]`
+  * returns: `[(meta, [data]), (meta2, [data2, data3]), ...]`
+* `combine_list(data)`
+  * data: `[(meta, [data]), (meta2, [data2, data3]), ...]`
+  * returns: `[(meta, [data, data2, data3, ...])]`
+  * *note: Meta data will be inherited from the first wav data included in the array. Make sure `channels`, `samplewidth`, `framerate` are all the same.*
+* `merge(data)`
+  * data: `(meta, [data, data2, data3, ...])`
+  * returns: `(meta, [data])`
+
+### Example usage
 
 ```Python
-from splitterkit import readwave, writewave, split, combine
-
-src = 'res/input/somefile.wav'
-dest = 'res/somefile.wav'
-
-data = readwave(src)
-# data = (meta, [data])
-splitted = split(data, 1) # into 1 second intervals
-# splitted = (meta, [wav,data,intervals])
-
-for i in range(len(splitted[1])):
-    destination = 'res/output/file-'+`i`+'.wav'
-    writewave(destination, (splitted[0],[splitted[1][i]]))
-# saves each 1-second interval to output as individual files
-
-combined = combine([splitted, data])
-# combined = (meta, [data])
-# essentially loops 2 times.
-writewave(dest, combined)
-```
-More straight-forward, you can directly split files with a buffer and an overlap, and receive an array of the destinations of these newly split files.
-```Python
-from splitterkit import split_overlap
+from splitterkit import readwave, writewave, splitInterval, merge, combine_list
 
 src = 'res/input/money.wav'
-dest = 'res/output'
-# split_overlap(src, dest, buffer, overlap)
-print split_overlap(src, dest, 1, 2)
-# output: ['res/output-0.wav', 'res/output-1.wav', ...]
-# buffer: # of skips per 1s interval (iterator) (>=1)
-# overlap: # of overlapping seconds (>=1)
+dest = 'res/file-'
+
+# extract data from wav file
+data = readwave(src)
+
+# split file into equal 1-second intervals
+splitted = splitInterval(data)
+
+# save each 1-second interval to output as individual files
+ex1 = writewave(dest + 'ex1-', splitted)
+print ex1 # ['res/file-ex1-0.wav', 'res/file-ex1-1.wav', ...]
+
+# here's a weird application of merging audio
+# which will output original sound looped twice.
+merged = merge(combine_list([splitted, data]))
+ex2 = writewave(dest + 'ex2-', merged)
+print ex2 # ['res/file-ex2-0.wav']
+
+# test this out by running test.py
 ```
 
-# Requirements
-
-1. This api is obviously written for wav files. Please don't try any other filetypes.
-2. Please equalize channels, samplewidth, and framerate if you want to perform combine functions. These metadata will be inherited from the first wav data included in the array.
+## Conclusion
 
 Authored by Andrew Jiang
