@@ -59,11 +59,11 @@ print ex2 # ['res/file-ex2-0.wav']
 * `splitInterval_s(data, interval_seconds, [overlap_seconds])`
   * same as `splitInterval()` but using seconds
 * `split_list(data)`:
-  * data: `[(meta, [data, data2, data3, ...])]`
+  * data: `(meta, [data, data2, data3, ...])`
   * returns: `[(meta, [data]), (meta2, [data2, data3]), ...]`
 * `combine_list(data)`
   * data: `[(meta, [data]), (meta2, [data2, data3]), ...]`
-  * returns: `[(meta, [data, data2, data3, ...])]`
+  * returns: `(meta, [data, data2, data3, ...])`
   * *note: Meta data will be inherited from the first wav data included in the array. Make sure `channels`, `samplewidth`, `framerate` are all the same.*
 * `merge(data)`
   * data: `(meta, [data, data2, data3, ...])`

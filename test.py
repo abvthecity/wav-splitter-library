@@ -1,6 +1,6 @@
 from splitterkit import readwave, writewave, splitInterval, merge, combine_list
 
-src = 'res/input/money.wav'
+src = 'res/samples/money.wav'
 dest = 'res/file-'
 
 # extract data from wav file
