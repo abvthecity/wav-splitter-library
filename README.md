@@ -13,15 +13,14 @@ dest = 'res/output/somefile.wav'
 data = readwave(src)
 # data = (meta, [data])
 splitted = split(data, 1) # into 1 second intervals
-# splitted = [(meta, [wav,data,intervals]), (metamod, [datamod])]
+# splitted = (meta, [wav,data,intervals])
 
-for i in range(len(splitted)):
-    for j in range(len(splitted[i][1])):
-        destination = 'res/output/file-'+`i`+'-'+`j`+'.wav'
-        writewave(destination, (splitted[i][0],[splitted[i][1][j]]))
+for i in range(len(splitted[1])):
+    destination = 'res/output/file-'+`i`+'.wav'
+    writewave(destination, (splitted[0],[splitted[1][i]]))
 # saves each 1-second interval to output as individual files
 
-combined = combine(splitted + [data])
+combined = combine([splitted, data])
 # combined = (meta, [data])
 # essentially loops 2 times.
 writewave(dest, combined)
