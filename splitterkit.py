@@ -1,3 +1,4 @@
+# author: Andrew Jiang
 import wave
 
 def readwave(src):

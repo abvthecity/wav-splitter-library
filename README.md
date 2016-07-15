@@ -42,3 +42,5 @@ print split_overlap(src, dest, 1, 2)
 
 1. This api is obviously written for wav files. Please don't try any other filetypes.
 2. Please equalize channels, samplewidth, and framerate if you want to perform combine functions. These metadata will be inherited from the first wav data included in the array.
+
+Authored by Andrew Jiang
