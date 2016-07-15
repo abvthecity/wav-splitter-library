@@ -1,25 +1,28 @@
 # Authored by Andrew Jiang
 # BCG digital Ventures
-import wave, math
-from collections import namedtuple
+import os, wave, math, collections
 
-metatuple = namedtuple('metatuple', ['nchannels', 'sampwidth', 'framerate', 'nframes', 'comptype', 'compname'])
-datatuple = namedtuple('datatuple', ['meta', 'data'])
+# define named tuples
+metatuple = collections.namedtuple('metatuple', ['nchannels', 'sampwidth', 'framerate', 'nframes', 'comptype', 'compname'])
+datatuple = collections.namedtuple('datatuple', ['meta', 'data'])
 
+# opens a wav file and returns the data as a tuple
 def readwave(src):
     read = wave.open(src, 'rb')
     meta = read.getparams()
-    # turn params into named tuple
+    # turn params into a metatuple
     meta = metatuple(meta[0], meta[1], meta[2], meta[3], meta[4], meta[5])
     data = read.readframes(meta.nframes)
     read.close()
     return datatuple(meta, [data])
 
+# writes to a directory
 def writewave(dest, data):
     files = []
-    data = split_list(data)
+    data = separate(data)
     for i in range(len(data)):
         destfile = dest + `i` + '.wav'
+        makedir(destfile) # make sure dir exists
         write = wave.open(destfile, 'wb')
         write.setparams(data[i].meta)
         write.writeframes(data[i].data)
@@ -27,25 +30,33 @@ def writewave(dest, data):
         files.append(destfile)
     return files
 
-def split(data, start, end):
-    data = merge(data) # insurance
+# helper function that creates dir if it doesn't exist
+def makedir(dest):
+    if(os.path.isdir(os.path.dirname(dest)) != True):
+        os.makedirs(os.path.dirname(dest))
+
+# slices audio data at given start, end — frame#
+def slicewave(data, start, end):
+    if(len(data.data) > 1):
+        data = merge(data) # insurance
     meta = data.meta
-    start *= meta.sampwidth
+    start *= meta.sampwidth # deal with sample width
     end *= meta.sampwidth
     spliced = data.data[0][start:end]
     nf = len(spliced) / meta.sampwidth
     meta = meta._replace(nframes=nf)
     return datatuple(meta, [spliced])
 
-def split_s(data, start, end):
+# slices audio data at given start, end — seconds
+def slicewave_s(data, start, end):
     fr = data.meta.framerate
-    newdata = split(data, start*fr, end*fr)
+    newdata = slicewave(data, int(1.0 * start * fr), int(1.0 * end * fr))
     return newdata
 
-def splitInterval(data, interval=None, overlap=None):
-    data = merge(data) # insurance
+# splits audio data into equal intervals — # of frames
+def split(data, interval=None, overlap=None):
     if(interval == None):
-        interval = data.meta.framerate # 1s
+        interval = data.meta.framerate # =1s
     if(overlap == None):
         overlap = interval
     if(interval < 1 or overlap < 1):
@@ -55,19 +66,22 @@ def splitInterval(data, interval=None, overlap=None):
     for i in range(iterations):
         start = i * interval
         end = start + overlap
-        canned.append(split(data, start, end))
-    newdata = combine_list(canned)
+        canned.append(slicewave(data, start, end))
+    newdata = combine(canned)
     return newdata
 
-def splitInterval_s(data, interval=None, overlap=None):
+# splits audio data into equal intervals — seconds
+def split_s(data, interval=None, overlap=None):
     if(interval != None):
-        interval = interval * data.meta.framerate
+        interval = int(1.0 * interval * data.meta.framerate)
     if(overlap != None):
-        overlap = overlap * data.meta.overlap
-    newdata = splitInterval(data, interval, overlap)
+        overlap = int(1.0 * overlap * data.meta.framerate)
+    newdata = split(data, interval, overlap)
     return newdata
 
-def split_list(data):
+# separate a data tuple containing multiple audio tracks
+# into an array of data tuples containing single audio tracks
+def separate(data):
     newdata = []
     nframes = data.meta.nframes
     ndata = len(data.data)
@@ -77,7 +91,9 @@ def split_list(data):
         newdata.append(datatuple(meta, data.data[i]))
     return newdata
 
-def combine_list(data):
+# combine an array of data tuples containing single audio tracks
+# into a single data tuple containing multiple audio tracks
+def combine(data):
     newdata = []
     meta = data[0].meta
     for i in range(len(data)):
@@ -86,6 +102,7 @@ def combine_list(data):
     meta = meta._replace(nframes=nf)
     return datatuple(meta, newdata)
 
+# merge multiple audio tracks into one
 def merge(data):
     meta = data.meta
     newdata = ''.join(data.data)
