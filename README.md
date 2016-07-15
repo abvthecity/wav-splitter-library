@@ -1,10 +1,8 @@
-# Wav Splitter API (aka SplitterKit)
+# Wav Splitter API (aka Splitterkit)
 
-SplitterKit is a simple python library for splitting and merging **wave** files. (Yes: .wav files only).
+Splitterkit is a simple python library for splitting and merging **wave** files.
 
-### What is this for?
-
-This micro-service library is written for an internal project at BCG Digital Ventures. It serves a specific purpose: splice an audio file into a dozen files. But I've written this library in a way that can be re-used for any wav-splitting purposes. :)
+This library is written for an internal project at BCG Digital Ventures. Its purpose is simple: split an audio track into a dozen tracks, or splice a segment out of a track. But I've written this library in a way that can be re-used for any wav-splitting purposes.
 
 ## How to use
 
@@ -70,5 +68,7 @@ print ex2 # ['res/file-ex2-0.wav']
   * returns: `(meta, [data])`
 
 ## Conclusion
+
+This is a single-file library that can be imported into any project your heart desires, including a node.js server using `python-shell`. Good luck! :)
 
 Authored by Andrew Jiang
