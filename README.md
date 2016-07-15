@@ -8,7 +8,7 @@ is a python library for splitting wav files into equal intervals, as well as com
 from splitterkit import readwave, writewave, split, combine
 
 src = 'res/input/somefile.wav'
-dest = 'res/output/somefile.wav'
+dest = 'res/somefile.wav'
 
 data = readwave(src)
 # data = (meta, [data])
@@ -24,6 +24,18 @@ combined = combine([splitted, data])
 # combined = (meta, [data])
 # essentially loops 2 times.
 writewave(dest, combined)
+```
+More straight-forward, you can directly split files with a buffer and an overlap, and receive an array of the destinations of these newly split files.
+```Python
+from splitterkit import split_overlap
+
+src = 'res/input/money.wav'
+dest = 'res/output'
+# split_overlap(src, dest, buffer, overlap)
+print split_overlap(src, dest, 1, 2)
+# output: ['res/output-0.wav', 'res/output-1.wav', ...]
+# buffer: # of skips per 1s interval (iterator) (>=1)
+# overlap: # of overlapping seconds (>=1)
 ```
 
 # Requirements
