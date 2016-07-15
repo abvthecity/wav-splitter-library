@@ -1,65 +1,109 @@
-# author: Andrew Jiang
-import wave
+# Authored by Andrew Jiang
+# BCG digital Ventures
+import os, wave, math, collections
 
+# define named tuples
+metatuple = collections.namedtuple('metatuple', ['nchannels', 'sampwidth', 'framerate', 'nframes', 'comptype', 'compname'])
+datatuple = collections.namedtuple('datatuple', ['meta', 'data'])
+
+# opens a wav file and returns the data as a tuple
 def readwave(src):
     read = wave.open(src, 'rb')
-    meta = list(read.getparams())
-    data = read.readframes(meta[3]) # everything!
+    meta = read.getparams()
+    # turn params into a metatuple
+    meta = metatuple(meta[0], meta[1], meta[2], meta[3], meta[4], meta[5])
+    data = read.readframes(meta.nframes)
     read.close()
-    print 'ran READWAVE'
-    return (meta, [data])
+    return datatuple(meta, [data])
 
+# writes to a directory
 def writewave(dest, data):
-    # data = (meta, [data])
-    write = wave.open(dest, 'wb')
-    write.setparams(tuple(data[0]))
-    write.writeframes(data[1][0])
-    write.close()
-    print 'ran WRITEWAVE'
-
-def split(data, interval):
-    # data = (meta, [data])
-    # read wav
-    sw = data[0][1] # sample width
-    frameRate = data[0][2]
-    nframes = data[0][3]
-    iframes = interval * frameRate
-    limit = nframes / iframes
-    if nframes % iframes > 0:
-        limit += 1
-    # split data
-    newData = []
-    for i in range(0, limit):
-        f = i * iframes * sw
-        t = (i + 1) * iframes * sw
-        content_raw = data[1][0][f:t]
-        newData.append(content_raw)
-    #  save new data
-    newMeta = list(data[0])
-    newMeta[3] = iframes
-    print 'ran SPLIT'
-    return (newMeta, newData)
-
-def combine(data):
-    meta = data[0][0]
-    newdata = ''
-    for i in range(len(data)):
-        newdata += ''.join(data[i][1])
-    meta[3] = len(newdata) / meta[1]
-    print 'ran COMBINE'
-    return (meta, [newdata])
-
-# this function is designed to split a wav file
-# into a series of wav files, with a buffer and an overlap
-def split_overlap(src, dest, buf, overlap):
-    data = readwave(src) # wav data
-    splitted = split(data, 1) # split into 1s intervals
     files = []
-    for i in range(len(splitted[1]) / buf):
-        j = i * buf # actual iterator
-        r = j + overlap
-        combined = combine([(splitted[0], splitted[1][j:r])])
+    data = separate(data)
+    for i in range(len(data)):
         destfile = dest + `i` + '.wav'
-        writewave(destfile, combined)
+        makedir(destfile) # make sure dir exists
+        write = wave.open(destfile, 'wb')
+        write.setparams(data[i].meta)
+        write.writeframes(data[i].data)
+        write.close()
         files.append(destfile)
     return files
+
+# helper function that creates dir if it doesn't exist
+def makedir(dest):
+    if(os.path.isdir(os.path.dirname(dest)) != True):
+        os.makedirs(os.path.dirname(dest))
+
+# slices audio data at given start, end — frame#
+def slicewave(data, start, end):
+    if(len(data.data) > 1):
+        data = merge(data) # insurance
+    meta = data.meta
+    start *= meta.sampwidth # deal with sample width
+    end *= meta.sampwidth
+    spliced = data.data[0][start:end]
+    nf = len(spliced) / meta.sampwidth
+    meta = meta._replace(nframes=nf)
+    return datatuple(meta, [spliced])
+
+# slices audio data at given start, end — seconds
+def slicewave_s(data, start, end):
+    fr = data.meta.framerate
+    newdata = slicewave(data, int(1.0 * start * fr), int(1.0 * end * fr))
+    return newdata
+
+# splits audio data into equal intervals — # of frames
+def split(data, interval=None, overlap=None):
+    if(interval == None):
+        interval = data.meta.framerate # =1s
+    if(overlap == None):
+        overlap = interval
+    if(interval < 1 or overlap < 1):
+        raise ValueError('cannot iterate')
+    iterations = int(math.ceil(1.0 * data.meta.nframes / interval))
+    canned = []
+    for i in range(iterations):
+        start = i * interval
+        end = start + overlap
+        canned.append(slicewave(data, start, end))
+    newdata = combine(canned)
+    return newdata
+
+# splits audio data into equal intervals — seconds
+def split_s(data, interval=None, overlap=None):
+    if(interval != None):
+        interval = int(1.0 * interval * data.meta.framerate)
+    if(overlap != None):
+        overlap = int(1.0 * overlap * data.meta.framerate)
+    newdata = split(data, interval, overlap)
+    return newdata
+
+# separate a data tuple containing multiple audio tracks
+# into an array of data tuples containing single audio tracks
+def separate(data):
+    newdata = []
+    nframes = data.meta.nframes
+    ndata = len(data.data)
+    for i in range(ndata):
+        nf = len(data.data[i]) / data.meta.sampwidth
+        meta = data.meta._replace(nframes=nf)
+        newdata.append(datatuple(meta, data.data[i]))
+    return newdata
+
+# combine an array of data tuples containing single audio tracks
+# into a single data tuple containing multiple audio tracks
+def combine(data):
+    newdata = []
+    meta = data[0].meta
+    for i in range(len(data)):
+        newdata += data[i].data
+    nf = len(''.join(newdata)) / meta.sampwidth
+    meta = meta._replace(nframes=nf)
+    return datatuple(meta, newdata)
+
+# merge multiple audio tracks into one
+def merge(data):
+    meta = data.meta
+    newdata = ''.join(data.data)
+    return datatuple(meta, [newdata])
