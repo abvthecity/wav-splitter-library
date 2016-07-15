@@ -1,7 +1,13 @@
-import wave
-from src.splitterkit import split_ascii
+from src.splitterkit import readwave, writewave, split, combine
 
 src = 'res/samples/f_disgust.wav'
-wavData = wave.open(src, mode='rb')
-data = split_ascii(wavData, 1)
-print data[1]
+dest = 'res/output/somefile.wav'
+
+data = readwave(src)
+print len(data[1][0])
+splitted = split(data, 1)
+print splitted[0][0][3], splitted[1][0][3]
+
+combined = combine(splitted + [data])
+print len(combined[1][0])
+writewave(dest, combined)
