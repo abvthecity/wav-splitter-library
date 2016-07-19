@@ -35,7 +35,7 @@ def makedir(dest):
     if(os.path.isdir(os.path.dirname(dest)) != True):
         os.makedirs(os.path.dirname(dest))
 
-# slices audio data at given start, end — frame#
+# slices audio data at given start, end: frame#
 def slicewave(data, start, end):
     if(len(data.data) > 1):
         data = merge(data) # insurance
@@ -47,13 +47,13 @@ def slicewave(data, start, end):
     meta = meta._replace(nframes=nf)
     return datatuple(meta, [spliced])
 
-# slices audio data at given start, end — seconds
+# slices audio data at given start, end: seconds
 def slicewave_s(data, start, end):
-    fr = data.meta.framerate
-    newdata = slicewave(data, int(1.0 * start * fr), int(1.0 * end * fr))
+    fr = float(data.meta.framerate)
+    newdata = slicewave(data, int(float(start) * fr), int(float(end) * fr))
     return newdata
 
-# splits audio data into equal intervals — # of frames
+# splits audio data into equal intervals: # of frames
 def split(data, interval=None, overlap=None):
     if(interval == None):
         interval = data.meta.framerate # =1s
@@ -70,12 +70,13 @@ def split(data, interval=None, overlap=None):
     newdata = combine(canned)
     return newdata
 
-# splits audio data into equal intervals — seconds
+# splits audio data into equal intervals: seconds
 def split_s(data, interval=None, overlap=None):
+    fr = float(data.meta.framerate)
     if(interval != None):
-        interval = int(1.0 * interval * data.meta.framerate)
+        interval = int(float(interval) * fr)
     if(overlap != None):
-        overlap = int(1.0 * overlap * data.meta.framerate)
+        overlap = int(float(overlap) * fr)
     newdata = split(data, interval, overlap)
     return newdata
 
