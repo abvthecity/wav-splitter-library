@@ -2,7 +2,7 @@
 
 Splitterkit is a simple python library for splitting and merging **wave** files.
 
-This library is written for an internal project at BCG Digital Ventures. Its purpose is simple: split an audio track into a dozen tracks, or splice a segment out of a track. But I've written this library in a way that can be re-used for any wav-splitting purposes.
+This library is written for a DV project. Its purpose is simple: split an audio track into a dozen tracks, or splice a segment out of a track. But I've written this library in a way that can be re-used for any wav-splitting purposes.
 
 ## How to use
 
